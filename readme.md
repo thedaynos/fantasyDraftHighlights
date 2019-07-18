@@ -103,6 +103,8 @@ python draftvid.py
 
 My personal preference is to let this run on a computer and then output the video of that computer to a big screen TV.  Then enter the picks on a different device, like your phone or another laptop.  Makes the experience a lot cooler.
 
+One thing I should mention is that the first time you run this, youtube will play an ad.  For whatever reason it always does this on fresh installs. But then afterwards, the ad doesn't pop up anymore. I guess it depends on youtube's mood at the time but sometimes you're gonna get an ad here and there.  If you can figure out how to block youtube ads, please IM me lol.  
+
 
 ## Author
 
