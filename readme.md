@@ -13,7 +13,11 @@ This hasn't been super thoroughly tested and there could be bugs, but I've teste
 OS: I ran this on my raspberry pi and windows 7 and 10 systems no problem. 
 Software: Chrome browser
 Python Version 3
-Packages: selenium. You will need to install selenium
+Package: requests. You will need to install requests
+```
+pip install requests
+```
+Package: selenium. You will also need to install selenium.  
 ```
 pip install selenium
 ```
