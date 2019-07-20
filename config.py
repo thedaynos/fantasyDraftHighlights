@@ -6,5 +6,5 @@ draftSiteVisible=False
 boardNum=12345
 time_to_login=30
 chromeCast=False
-chromeCastName=""
+chromeCastName="YOUR CHROMECAST NAME HERE"
 autoSearch=True
