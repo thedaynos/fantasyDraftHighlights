@@ -7,9 +7,13 @@ Works best with Chromecast devices, but can be viewed in a youtube browser on yo
 ## Getting Started
 
 This only will work with:
+
 draftboards: clickydraft and sleeperbot (For now) 
+
 display: youtube on your chromecast device or computer/HDMI out
+
 browser: chrome web browser 
+
 
 Download the files in my git repository to a directory anywhere you like.
 
