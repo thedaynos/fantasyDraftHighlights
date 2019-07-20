@@ -199,4 +199,4 @@ One thing I should mention is that the first time you run this in a chrome brows
 I am thedaynos and I have a patreon if you feel like donating to my "i don't code for free (actually i guess i do) foundation"
 https://www.patreon.com/thedaynos
 
-msg me on reddit if you have questions or find a bug.  /u/thedaynos
+Feel free to report issues here on github if you have questions or find a bug. 
