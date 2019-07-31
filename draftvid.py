@@ -1,6 +1,8 @@
 import re, requests,json
 from config import *
 
+
+#initialize chromecast
 if chromeCast:
     import pychromecast
     from pychromecast.controllers.youtube import YouTubeController
@@ -15,14 +17,28 @@ if chromeCast:
         print ("\n\n"+chromeCastName+" not found, vids will be displayed on this pc")
         chromeCast=False
 
+#set up system variables for specific drafting sites
 if "sleeper" in site:
     import time
     site=="sleeper"
+    sApi="https://api.sleeper.app/v1/draft/"+str(boardNum)+"/picks"
     from vDictSleeper import vDictSleeper as vDict
 elif "clicky" in site:
     site=="clicky"
     from vDictClicky import vDictClicky as vDict
+elif "basmith7" in site:
+    import time
+    site=="basmith7"
+    from vDictbasmith7 import vDictbasmith7 as vDict
+else:
+    print ("\n\n\nConfig Error\n\n")
+    print ('In the config file, the line site= must have a choice of: "sleeper", "clicky", or "basmith7".')
+    import sys
+    exit()
 
+
+
+#initialize selenium drivers
 if chromeCast==False or site=="clicky":
     from selenium import webdriver
     prefs={"profile.default_content_setting_values.notifications":2}
@@ -30,25 +46,48 @@ if chromeCast==False or site=="clicky":
         draftOptions=webdriver.ChromeOptions()
         draftOptions.add_experimental_option("prefs",prefs)
         draftOptions.add_argument('disable-infobars')
-        if clickySiteVisible==False:
+        if draftBoardVisible==False:
             draftOptions.add_argument("--headless")
-            draftDriver=webdriver.Chrome(chrome_options=draftOptions)
+        draftDriver=webdriver.Chrome(chrome_options=draftOptions)
         draftDriver.get('https://clickydraft.com/draftapp/board/'+str(boardNum))
 
-sApi="https://api.sleeper.app/v1/draft/"+str(boardNum)+"/picks"
+#setting up youtube display for selenium
+if chromeCast==False:
+    youTubeOptions=webdriver.ChromeOptions()
+    youTubeOptions.add_argument("user-data-dir=youTube")
+    youTubeOptions.add_argument("--start-maximized")
+    youTubeOptions.add_argument("--kiosk")
+    youTubeOptions.add_argument('disable-infobars')
+    youTubeOptions.add_experimental_option("prefs",prefs)
+    youTubeDriver=webdriver.Chrome(chrome_options=youTubeOptions)
+
+#setting up youtube links
 yt="https://youtube.com/tv#/watch?v="    
 ytSearch="https://www.youtube.com/results?search_query="
 
-s=re.compile('[^a-zA-Z]')
 
-def findTag(html,x):
+#functions to find tags if screen scraping is needed
+s=re.compile('[^a-zA-Z]')
+def findClickyTag(html,x):
     if html.find(x)!=-1:
         xhtml=html[html.find(x)+len(x):]
         end=xhtml.find('<')
     else:
         return -1,html
     return s.sub('',xhtml[:end]),xhtml
+def findbasmith7Tag(html):
+    if html.find('1050371') < 0:
+        return False,"","","",""
+    else:
+        html=html[html.find('1050371')+21:]
+        fullName=html[:html.find('\\n')]
+        posString=html[html.find('\\n')+2:]
+        dashLoc=posString.find(' - ')
+        pos=posString[:dashLoc]
+        team=posString[dashLoc+3:dashLoc+6]
+        return True,s.sub('',fullName),pos,team,html
 
+#function runs when new player is found
 def addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName):
     if thisPlayer not in pTable:
         try:
@@ -63,7 +102,7 @@ def addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName):
                     youTubeDriver.get(yt+vLink)
             elif autoSearch:
                 try:
-                    url=ytSearch+fName+"+"+lName+"highlights"
+                    url=ytSearch+fName+"+"+lName+"+highlights"
                     response = requests.get(url)
                     yhtml=response.text
                 except requests.exceptions.RequestException:
@@ -78,16 +117,11 @@ def addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName):
         pTable.append(thisPlayer)
     return pTable
 
-if chromeCast==False:
-    youTubeOptions=webdriver.ChromeOptions()
-    youTubeOptions.add_argument("user-data-dir=youTube")
-    youTubeOptions.add_argument("--start-maximized")
-    youTubeOptions.add_argument("--kiosk")
-    youTubeOptions.add_argument('disable-infobars')
-    youTubeOptions.add_experimental_option("prefs",prefs)
-    youTubeDriver=webdriver.Chrome(chrome_options=youTubeOptions)
 
+#create player table
 pTable=[]
+#choiceActive false at the beginning so the first player loop doesn't play
+#videos for the players already entered.
 choiceActive=False
 while (True):
     if site=="clicky":
@@ -95,16 +129,16 @@ while (True):
         html=html[html.find("<tbody>"):html.find("</tbody>")]
         for x in range (0,teams*rounds):
             html=html[html.find('class="pickContents"'):]
-            pos,html=findTag(html,'class="playerPos">')
-            team,html=findTag(html,'class="playerTeam">')
-            fName,html=findTag(html,'class="playerFName">')
-            lName,html=findTag(html,'class="playerLName">')
+            pos,html=findClickyTag(html,'class="playerPos">')
+            team,html=findClickyTag(html,'class="playerTeam">')
+            fName,html=findClickyTag(html,'class="playerFName">')
+            lName,html=findClickyTag(html,'class="playerLName">')
             thisPlayer=[pos,team,fName,lName]
             vStr=pos+team+fName+lName
             pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName)
     elif site=="sleeper":
         time.sleep(1)
-        while (True):
+        while True:
             try:
                 response = requests.get(sApi)
                 yJson=json.loads(response.text)
@@ -120,9 +154,31 @@ while (True):
             thisPlayer=[pos,fName,lName]
             vStr=pos+fName+lName
             pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName)
+    elif site=="basmith7":
+        time.sleep(5)
+        while True:
+            try:
+                response = requests.get(basmith7URL)
+                html=response.text
+                break
+            except requests.exceptions.RequestException:
+                html=""
+                print ("call to: "+basmith7URL+" failed, trying again in 5 seconds")
+                time.sleep(5)
+        html=html[html.find("var bootstrapData = ")+20:]
+        html=html[:html.find(";")]
+        while True:
+            foundName,fullName,pos,team,html=findbasmith7Tag(html)
+            if foundName:
+                vStr=s.sub('',str(pos)+str(team)+str(fullName))
+                thisPlayer=[pos,team,fullName]
+                pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,"",fullName)
+            else:
+                break
     choiceActive=True
     if len(pTable)>=(teams*rounds):
         break
+
 if site=="clicky":
     draftDriver.quit()
 if chromeCast==False:

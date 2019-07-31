@@ -4,26 +4,34 @@ Real simple python program that reads clickydraft or sleeperbot draft boards to 
 
 Works best with Chromecast devices, but can be viewed in a youtube browser on your computer if you like.
 
+## Changes
+
+- for the newest version i've added support for basmith7 draft boards (from reddit/ff)
+
+- previously added chromecast support and sleeperbot support
+
 ## Getting Started
 
 This only will work with:
 
-draftboards: clickydraft and sleeperbot (For now) 
+draftboards: sleeperbot, clickydraft, and basmith7's google drive board (For now) 
+I'm currently working on other popular draft boards (espn/yahoo/nfl/cbs, but no promises)
 
 display: youtube on your chromecast device or computer/HDMI out
 
 browser: chrome web browser 
 
 
-Download the files in my git repository to a directory anywhere you like.
-
-This hasn't been super thoroughly tested and there could be bugs, but I've tested it quite a bit while creating it and I'm pretty sure I got everything.  If you find a bug please contact me. 
+Download the files in this repository to a directory anywhere you like. 
+You'll need to edit the config.py file so that it knows a little bit about your draft.  
+And depending on what options you'll be using, you might need to install some python packages.
 
 ### Prerequisites
 
 OS: I ran this on my raspberry pi, ubuntu, windows 7, and windows 10 systems no problem. 
 Software: Chrome browser
 Python Version 3
+
 Packages.....
 
 Package: requests. json. You will need requests and json. Install them if you don't have them. 
@@ -31,17 +39,8 @@ Package: requests. json. You will need requests and json. Install them if you do
 pip install requests
 pip install json
 ```
-Package: selenium. You will also need to install selenium for most configurations.  (If you are using chromecast with sleeper, then this is not needed)  
-```
-pip install selenium
-```
-Selenium requires a specific "webdriver" for the version of chrome that you're running. Simple google search should help you find this and the instructions for what to do with the webdriver when you get it. 
-```
-https://sites.google.com/a/chromium.org/chromedriver/downloads
-```
 
-
-Package: The following packages are necessary if you're going to use chromecast. If not, you can skip past these. 
+The following packages are necessary if you're going to use chromecast. If not, you can skip past these. 
 
 ```
 pip install pychromecast
@@ -51,36 +50,70 @@ pip install casttube
 ```
 
 
-### Installing
+Now skip to the section that applies to you. There is a section for sleeper, clicky, and for the basmith7 draft board.
 
-Download all the files and put them all in the same folder.
+####CLICKYDRAFT
 
-After you've created your clickydraft or sleeperbot draft board, you will need to edit the config.py file.
+Using this with Clickydraft will require selenium.
+
+```
+pip install selenium
+```
+
+Selenium requires a specific "webdriver" for the version of chrome that you're running. Simple google search should help you find this and the instructions for what to do with the webdriver when you get it. 
+
+```
+https://sites.google.com/a/chromium.org/chromedriver/downloads
+```
+
+####SLEEPERBOT/basmith7
+
+
+For these boards, if you are going to be displaying on a chrome browser (youtube), then you'll need selenium installed. Follow the selenium instructions listed in the clickydraft section.
+
+If running on chromecast with sleeperbot or basmith7, then no need for selenium.
+
+
+
+### Config File
+
+After you've created your draft board, you will need to edit the config.py file.
+
 Open it up with any text editor.  
 That file is small and only contains a few lines.  Here's how it looks when you download it.
+
 
 ```
 
 site="sleeper"
 teams=12
 rounds=16
-boardNum=12345
 chromeCast=False
 chromeCastName="YOUR CHROMECAST NAME HERE"
-clickySiteVisible=False
+draftBoardVisible=False
 autoSearch=True
+
+#SLEEPERBOT AND CLICKYDRAFT ONLY, boardNum is required (no quotes)
+boardNum=12345
+
+#basmith7 ONLY, basmith7URL is required (quotes needed)
+basmith7URL="https://spreadsheetDocLink"
+
 ```
 #### site
 
-If you're using clickydraft then enter site="clicky"
-If you're using sleeperbot then enter site="sleeper"
-If you have anything else in there, the app won't run correctly.  
+If you're using sleeperbot then keep the first line at site="sleeper"
+If you're using clickydraft then change the site line to site="clicky"
+If you're using basmith7, then site="basmith7"
+
+If you have anything else in there, the app will exit as soon as you run it.
+
 
 #### teams/rounds
 
 Super simple stuff here. Change your teams and rounds to the number of teams and rounds in your draft.  
 
-#### boardNum
+#### boardNum (clickydraft or sleeperbot only)
 
 BoardNum is the number on the end of your clickydraft or sleeperbot URL.
 
@@ -93,15 +126,27 @@ If this is what your URL looks like then the boardNum is 12345
 
 Sleeper boardNum's are pretty long, like 18 digits.  Best to copy/paste it.
 
+####basmith7URL (basmith7 only)
+
+Here you'll need to enter the link to your draft board. Make sure you use the SHAREABLE link which you can find by going to the upper right hand corner of the draft board (green box that says Share).  Click that and get the shareable link.  If you don't do this, then it will get your private link that won't be able to be accessed by this app.
+
+Copy that link and enter it here, between the quotes like so: 
+
+
+```
+basmith7URL="https://whateveryourlinkis"
+```
+
+
 #### chromeCast
 
 chromeCast True or False.. If True then your vids will cast to a chromecast.  If False then they'll play on a youtube screen on your laptop.  
 If you set this to True then you also need to list your chromecast's name in the next line.  The name needs to be typed perfectly in order for it to work correctly, including all spaces, punctuation, and capitalization.
 If the application cannot find your specific chromecast then it will auto-switch to using youtube on the computer.  If you're not sure why this is happening then please check whether that computer can access that specific chromecast and if so, make sure the chromecast name is typed correctly.
 
-#### clickySiteVisible
+#### draftBoardVisible (clickydraft ONLY)
 
-The variable "clickySiteVisible" is only used for clickydraft drafts, and can be set to True or False (capitalization is important). Default is False.
+The variable "draftboardvisible" is only used for clickydraft drafts, and can be set to True or False (capitalization is important). Default is False.
 
 If you set it to True then the draft site will pop up on your screen.  If you set it to False then it won't.  
 If you aren't going to use chromecast to display the vids then False is probably the best choice here because the point of this app is to display highlight videos. 
@@ -115,14 +160,15 @@ If it's set to True, the program will go out and search youtube for the first hi
 
 This is going to work fine for most players, however some players have common names so the youtube search might return a vid for a different player in a different sport.
 
-You can change this behavior by placing a specific youtube video link of your choice in the vDict file for either sleeperbot or clickydraft. 
+You can change this behavior by placing a specific youtube video link of your choice in the vDict file for your draftboard. As you can see there are 3 different files.  This is because there are very slight differences in how each board reads the players names.  
 
 ```
+vDictbasmith7.py
 vDictClicky.py
 vDictSleeper.py
 ```
 
-Both of these files are in your folder already.  The code will look in the correct file and grab whatever link you have placed in that player's entry in the dictionary.  
+All of these files are in your folder already.  The code will look in the correct file and grab whatever link you have placed in that player's entry in the dictionary.  
 
 If there is no link, then it will auto search on youtube.
 
@@ -172,9 +218,8 @@ Like this:
 ```
 
 
-I've included over 600 possible players that you're allowed to draft in the apps. So you are set even if you have up to 32 team, 18 round draft :)
+I've included between 400-600 possible players that you're allowed to draft in the apps. So you are set even if you have up to 20 team, 20 round draft :)
 
-And I've already assigned specific links for all defensive team highlights.  Honestly some teams didn't have a lot of defensive highlights from last year so I did the best I could on minimal effort.
 
 ## To Run
 
