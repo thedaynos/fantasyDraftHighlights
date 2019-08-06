@@ -161,7 +161,7 @@ If it's set to True, the program will go out and search youtube for the first hi
 
 This is going to work fine for most players, however some players have common names so the youtube search might return a vid for a different player in a different sport.
 
-You can change this behavior by placing a specific youtube video link of your choice in the vDict file for your draftboard. As you can see there are 3 different files.  This is because there are very slight differences in how each board reads the players names.  
+You can change this behavior by placing a specific youtube video link of your choice in the vDict file for your draftboard. As you can see there are 5 different files.  This is because there are very slight differences in how each board reads the players names.  
 
 ```
 vDictbasmith7.py
@@ -214,14 +214,8 @@ Like this:
 ```
 Any change in that will probably cause problems.
 
-If you don't want ANY vid for that player, no matter what, then either delete his entry or put a hashtag at the beginning of the line. 
-Like this:
-```
-#    "RBDALEzekielElliott":"",
-```
 
-
-I've included between 400-600 possible players that you're allowed to draft in the apps. So you are set even if you have up to 20 team, 20 round draft :)
+I've included between 400-700 possible players that you're allowed to draft in the apps, depending on the platform. So you are set even if you have up to 20 team, 20 round draft :)
 
 
 ## To Run
@@ -248,7 +242,7 @@ You will use the 2nd owner account to run this program.
 
 When you first run the program, it will open up the regular ESPN fantasy football page.  Log in using the 2nd owner account, then select your team, and then click the "Join Your Draft" button.  
 
-*Note. IF you choose to draft from the same system that will be displaying the videos, then you will not need a 2nd account. although I recommend against that as it's easy to screw things up.
+*Note. IF you choose to draft from the same system that will be displaying the videos, then you will not need a 2nd account. although I HIGHLY recommend against that as it's easy to screw the program up.
 
 Once you open up the draft screen, you can leave it alone. The code will reload your draft, then minimize the screen and selenium starts reading the board.  
 
@@ -266,9 +260,11 @@ You CANNOT draft from the same browser with yahoo draft boards! It will not work
 
 Once your board is opened, I suggest just leaving it alone and let it run.  The code will reload your draft, then minimize the screen and selenium starts reading the board.  
 
-### ALSO
+### HINTS/TIPS
 
 * One thing I should mention is that the first time you run this in a chrome browser, youtube will play an ad.  For whatever reason it always does this on fresh installs and the first time you run it every day. But then afterwards, the ad doesn't pop up very often. I guess it depends on youtube's mood at the time but sometimes you're gonna get an ad here and there.  If you can figure out how to block youtube ads, please IM me lol.  The ads don't seem to pop up as often when you use chromecast, so I guess that's another good reason to use chromecast for this.
+
+* You can avoid ads altogether with a youtube subscription.  They give 30 day subs for free, then you can cancel. I'll probably end up doing this for my drafts this year.
 
 * Some player highlight videos on youtube have ridiculously long introductions.  You can skip those introductions on a video-by-video basis if you are specifying that video in the vDict file.  For instance, take the zeke example from above.  
 
