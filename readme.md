@@ -1,21 +1,20 @@
 # Fantasy Draft AutoHighlight Viewer
 
-Real simple python program that reads clickydraft or sleeperbot draft boards to enhance your draft party by automatically playing a highlight video of the player who just got selected.
+Real simple python program that reads espn, yahoo*, clickydraft, and sleeperbot fantasy football draft boards to enhance your draft party by automatically playing a highlight video of the player who just got selected.
 
 Works best with Chromecast devices, but can be viewed in a youtube browser on your computer if you like.
 
+*note: yahoo's draft board, as of 8/5/2019, is still in "beta".  as soon as they move it out of beta, I'll update this code, as it probably will not work correctly after their updates.  
+
 ## Changes
 
-- for the newest version i've added support for basmith7 draft boards (from reddit/ff)
-
-- previously added chromecast support and sleeperbot support
+- for the newest version i've added support for espn and yahoo draft boards (from reddit/ff)
 
 ## Getting Started
 
 This only will work with:
 
-draftboards: sleeperbot, clickydraft, and basmith7's google drive board (For now) 
-I'm currently working on other popular draft boards (espn/yahoo/nfl/cbs, but no promises)
+draftboards: espn, yahoo, sleeperbot, clickydraft, and basmith7's google drive board (For now) 
 
 display: youtube on your chromecast device or computer/HDMI out
 
@@ -50,11 +49,11 @@ pip install casttube
 ```
 
 
-Now skip to the section that applies to you. There is a section for sleeper, clicky, and for the basmith7 draft board.
+Now skip to the section that applies to you. There is a section for espn, yahoo, sleeper, clicky, and for the basmith7 draft board.
 
-####CLICKYDRAFT
+#### ESPN/YAHOO/CLICKYDRAFT
 
-Using this with Clickydraft will require selenium.
+Using this with ESPN, Yahoo, or Clickydraft will require selenium.
 
 ```
 pip install selenium
@@ -66,12 +65,13 @@ Selenium requires a specific "webdriver" for the version of chrome that you're r
 https://sites.google.com/a/chromium.org/chromedriver/downloads
 ```
 
-####SLEEPERBOT/basmith7
+
+#### SLEEPERBOT/basmith7
 
 
 For these boards, if you are going to be displaying on a chrome browser (youtube), then you'll need selenium installed. Follow the selenium instructions listed in the clickydraft section.
 
-If running on chromecast with sleeperbot or basmith7, then no need for selenium.
+If displaying on chromecast with sleeperbot or basmith7, then no need for selenium.
 
 
 
@@ -104,6 +104,7 @@ basmith7URL="https://spreadsheetDocLink"
 
 If you're using sleeperbot then keep the first line at site="sleeper"
 If you're using clickydraft then change the site line to site="clicky"
+ESPN, site="espn" and YAHOO, site="yahoo"
 If you're using basmith7, then site="basmith7"
 
 If you have anything else in there, the app will exit as soon as you run it.
@@ -126,7 +127,7 @@ If this is what your URL looks like then the boardNum is 12345
 
 Sleeper boardNum's are pretty long, like 18 digits.  Best to copy/paste it.
 
-####basmith7URL (basmith7 only)
+#### basmith7URL (basmith7 only)
 
 Here you'll need to enter the link to your draft board. Make sure you use the SHAREABLE link which you can find by going to the upper right hand corner of the draft board (green box that says Share).  Click that and get the shareable link.  If you don't do this, then it will get your private link that won't be able to be accessed by this app.
 
@@ -165,7 +166,9 @@ You can change this behavior by placing a specific youtube video link of your ch
 ```
 vDictbasmith7.py
 vDictClicky.py
+vDictESPN.py
 vDictSleeper.py
+vDictYahoo.py
 ```
 
 All of these files are in your folder already.  The code will look in the correct file and grab whatever link you have placed in that player's entry in the dictionary.  
@@ -237,7 +240,48 @@ If you connected then you're ready to draft!
 
 If you didn't connect, or aren't using chromecast, then a chrome window will pop up in fullscreen, ready to display your youtube vids.  In this scenario, this app is best used when you output the video (HDMI) to a big screen TV.  Then enter the picks on a different device, like your phone or another laptop.  Makes the experience a lot cooler.
 
-One thing I should mention is that the first time you run this in a chrome browser, youtube will play an ad.  For whatever reason it always does this on fresh installs and the first time you run it every day. But then afterwards, the ad doesn't pop up very often. I guess it depends on youtube's mood at the time but sometimes you're gonna get an ad here and there.  If you can figure out how to block youtube ads, please IM me lol.  The ads don't seem to pop up as often when you use chromecast, so I guess that's another good reason to use chromecast for this.
+### For Running on ESPN and YAHOO please keep reading....
+
+Because ESPN doesn't allow the same account to have a draft screen open on multiple devices, you have to create a 2nd owner for your team.   This is very easy to do, just go to LM Tools/Edit Team Owners, then find the team that you control and add a 2nd owner.  This requires you to add a new account and sometimes a new email address, so do this in advance of your draft.
+
+You will use the 2nd owner account to run this program.  
+
+When you first run the program, it will open up the regular ESPN fantasy football page.  Log in using the 2nd owner account, then select your team, and then click the "Join Your Draft" button.  
+
+*Note. IF you choose to draft from the same system that will be displaying the videos, then you will not need a 2nd account. although I recommend against that as it's easy to screw things up.
+
+Once you open up the draft screen, you can leave it alone. The code will reload your draft, then minimize the screen and selenium starts reading the board.  
+
+For Yahoo Drafts...
+
+Very similar to ESPN...
+
+Because Yahoo doesn't allow the same account to have a draft screen open on multiple devices, you have to create a 2nd owner for your team.   This is very easy to do, just go to My Team/Edit Team Info, and then go to the section titled "Co-manager settings". From here, add the 2nd owner.  Again, like ESPN, doing this will require you to add or already have a separate account and sometimes a new email address, so do this in advance of your draft.
+
+You will use the 2nd owner account to run this program.  
+
+When you first run the program, it will open up the regular yahoo fantasy football page.  Log in using the 2nd owner account, then select your team, and then click the "Enter Live Draft" button.  
+
+You CANNOT draft from the same browser with yahoo draft boards! It will not work correctly. 
+
+Once your board is opened, I suggest just leaving it alone and let it run.  The code will reload your draft, then minimize the screen and selenium starts reading the board.  
+
+### ALSO
+
+* One thing I should mention is that the first time you run this in a chrome browser, youtube will play an ad.  For whatever reason it always does this on fresh installs and the first time you run it every day. But then afterwards, the ad doesn't pop up very often. I guess it depends on youtube's mood at the time but sometimes you're gonna get an ad here and there.  If you can figure out how to block youtube ads, please IM me lol.  The ads don't seem to pop up as often when you use chromecast, so I guess that's another good reason to use chromecast for this.
+
+* Some player highlight videos on youtube have ridiculously long introductions.  You can skip those introductions on a video-by-video basis if you are specifying that video in the vDict file.  For instance, take the zeke example from above.  
+
+```
+    "RBDALEzekielElliott":"8CJvUpV2jp0",
+```
+
+If you want the vid to start at the 30 second mark, you need to add &t=30 to the yahoo vid code.  Example here:
+
+```
+    "RBDALEzekielElliott":"8CJvUpV2jp0&t=30",
+```
+
 
 ## Author
 
