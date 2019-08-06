@@ -11,4 +11,4 @@ autoSearch=True
 boardNum=12345
 
 #basmith7 ONLY, basmith7URL is required (quotes needed)
-basmith7URL="https://spreadsheetDocLink"
+basmith7URL="https://entireUrlHere"
