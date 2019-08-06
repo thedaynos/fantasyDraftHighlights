@@ -8,7 +8,7 @@ Works best with Chromecast devices, but can be viewed in a youtube browser on yo
 
 ## Changes
 
-- for the newest version i've added support for espn and yahoo draft boards (from reddit/ff)
+- for the newest version i've added support for espn and yahoo draft boards 
 
 ## Getting Started
 
