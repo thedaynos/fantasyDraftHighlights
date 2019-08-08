@@ -20,28 +20,28 @@ if chromeCast:
 #set up system variables for specific drafting sites
 if "sleeper" in site.lower():
     import time
-    site=="sleeper"
+    site="sleeper"
     sApi="https://api.sleeper.app/v1/draft/"+str(boardNum)+"/picks"
     from vDictSleeper import vDictSleeper as vDict
 elif "clicky" in site.lower():
-    site=="clicky"
+    site="clicky"
     from vDictClicky import vDictClicky as vDict
 elif "basmith7" in site.lower():
     import time
-    site=="basmith7"
+    site="basmith7"
     from vDictbasmith7 import vDictbasmith7 as vDict
 elif "espn" in site.lower():
-    site=="espn"
+    site="espn"
     import time
     from vDictEspn import vDictEspn as vDict
     mainUrl="https://www.espn.com/fantasy/football/"
     boardUrl="fantasy.espn.com/football/draft?leagueId="
 elif "yahoo" in site.lower():
-    site=="yahoo"
+    site="yahoo"
     import time
     from vDictYahoo import vDictYahoo as vDict
     mainUrl="https://sports.yahoo.com/fantasy/"
-    boardUrl="football.fantasysports.yahoo.com/beta"
+    boardUrl="football.fantasysports.yahoo.com/draftclient"
 else:
     print ("\n\n\nConfig Error\n\n")
     print ('In the config file, the line site= must have a choice of: "espn", "yahoo", "sleeper", "clicky", or "basmith7".')
