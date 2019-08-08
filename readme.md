@@ -4,8 +4,6 @@ Real simple python program that reads espn, yahoo*, clickydraft, and sleeperbot 
 
 Works best with Chromecast devices, but can be viewed in a youtube browser on your computer if you like.
 
-*note: yahoo's draft board, as of 8/5/2019, is still in "beta".  as soon as they move it out of beta, I'll update this code, as it probably will not work correctly after their updates.  
-
 ## Changes
 
 - for the newest version i've added support for espn and yahoo draft boards 
