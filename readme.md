@@ -33,10 +33,9 @@ Python Version 3
 
 Packages.....
 
-Package: requests. json. You will need requests and json. Install them if you don't have them. 
+Package: requests. You will need requests. Install this if you don't have it. 
 ```
 pip install requests
-pip install json
 ```
 
 The following packages are necessary if you're going to use chromecast. If not, you can skip past these. 
