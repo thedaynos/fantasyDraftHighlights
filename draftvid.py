@@ -156,9 +156,9 @@ def findYahooTag(html):
         pos="DEF"
         return html,fullName,"",pos
     thisPlayer=thisPlayer[thisPlayer.find(teamText)+1:]
-    team=thisPlayer[thisPlayer.find('>'):thisPlayer.find('<')]
+    team=thisPlayer[thisPlayer.find('>')+1:thisPlayer.find('<')]
     thisPlayer=thisPlayer[thisPlayer.find(posText)+1:]
-    pos=thisPlayer[thisPlayer.find('>'):thisPlayer.find('<')]
+    pos=thisPlayer[thisPlayer.find('>')+1:thisPlayer.find('<')]
     return html,fullName,team,pos
 def findYahooD(html):  #need a separate function for defenses on yahoo
     idText='Fw-b ys-player Mstart-4'
