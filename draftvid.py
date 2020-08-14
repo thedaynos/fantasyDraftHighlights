@@ -1,7 +1,6 @@
 import re, requests,json
 from config import *
 
-
 #initialize chromecast
 if chromeCast:
     import pychromecast
@@ -50,13 +49,16 @@ else:
 
 #initialize selenium drivers and open draft boards
 if chromeCast==False or site=="clicky" or site=="espn" or site=="yahoo":
+    # these lines are needed for all cases that use selenium
     from selenium import webdriver
     prefs={"profile.default_content_setting_values.notifications":2}
+    # this section is for draftboard selenium use cases (non youtube)
     if site=="clicky" or site=="espn" or site=="yahoo":
         draftOptions=webdriver.ChromeOptions()
         draftOptions.add_experimental_option("prefs",prefs)
         draftOptions.add_experimental_option('excludeSwitches', ['enable-logging'])
         draftOptions.add_argument('disable-infobars')
+        #cannot be headless for espn or yahoo because you need to log in.
         if draftBoardVisible==False and site!="espn" and site!="yahoo":
             draftOptions.add_argument("--headless")
         draftDriver=webdriver.Chrome(chrome_options=draftOptions)
@@ -66,6 +68,7 @@ if chromeCast==False or site=="clicky" or site=="espn" or site=="yahoo":
             draftDriver.get(mainUrl)
             url=""
             print ("waiting for user to open the "+site+" draft board")
+            # toggles through open tabs every 5 seconds to find your draft board.
             while True:
                 for handle in draftDriver.window_handles:
                     draftDriver.switch_to.window(handle)
@@ -78,8 +81,9 @@ if chromeCast==False or site=="clicky" or site=="espn" or site=="yahoo":
                     break
                 else:
                     time.sleep(5)
+            # after the board is found, selenium loads it to give it focus
             draftDriver.get(url)
-            draftDriver.minimize_window()
+            # for yahoo, it will click on "draft results" or else selenium can't see the picks
             if site=="yahoo":
                 from selenium.common.exceptions import NoSuchElementException as NSE
                 while True:
@@ -101,11 +105,14 @@ if chromeCast==False:
     youTubeOptions.add_experimental_option('excludeSwitches', ['enable-logging'])
     youTubeOptions.add_experimental_option("prefs",prefs)
     youTubeDriver=webdriver.Chrome(chrome_options=youTubeOptions)
+    youTubeDriver.get("https://www.youtube.com")
+
 
 #setting up youtube links
-yt="https://youtube.com/tv#/watch?v="    
+yt="https://www.youtube.com/watch?v="
+yt2="&feature=emb_rel_err"
 ytSearch="https://www.youtube.com/results?search_query="
-
+#videoEmbeddable:"true"
 
 #functions to find tags if screen scraping is needed
 s=re.compile('[^a-zA-Z]')
@@ -160,6 +167,7 @@ def findYahooTag(html):
     thisPlayer=thisPlayer[thisPlayer.find(posText)+1:]
     pos=thisPlayer[thisPlayer.find('>')+1:thisPlayer.find('<')]
     return html,fullName,team,pos
+
 def findYahooD(html):  #need a separate function for defenses on yahoo
     idText='Fw-b ys-player Mstart-4'
     teamText='<span class="Mstart-4"><abbr title="'
@@ -175,7 +183,39 @@ def findYahooD(html):  #need a separate function for defenses on yahoo
     html=html[html.find(posText)+len(posText):]
     pos=html[:html.find('<')]
     return html,fullName,team,pos
-    
+
+#this function plays the video found from youtube
+def playVid(vLink):
+    if chromeCast:
+        ytc.play_video(vLink)
+    else:
+        youTubeDriver.get(yt+vLink+yt2)
+        try:
+            playaE=youTubeDriver.find_element_by_id('movie_player')
+        except:
+            nada=0
+        try:
+            playaE.send_keys('f')
+        except:
+            nada=0
+    return 
+
+#searches Youtube for link
+def findVLink(fName,lName):
+    try:
+        url=ytSearch+fName+"+"+lName+"+highlights"
+        response = requests.get(url)
+        yhtml=response.text
+        yhtml=yhtml[yhtml.find('href="/watch?v=')+15:]
+        vLink=yhtml[:yhtml.find('"')]
+        if "><" in vLink:
+            yhtml=response.text
+            yhtml=yhtml[yhtml.find('"videoId":"')+11:]
+            vLink=yhtml[:yhtml.find('"')]
+    except requests.exceptions.RequestException:
+        vLink=""
+    return vLink
+
 #function runs when player is found on the draft board
 def addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName):
     if thisPlayer not in pTable:
@@ -185,27 +225,23 @@ def addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName):
             vLink=""
         if choiceActive:
             if vLink!="":
-                if chromeCast:
-                    ytc.play_video(vLink)
-                else:
-                    youTubeDriver.get(yt+vLink)
+                playVid(vLink)
             elif autoSearch:
-                try:
-                    url=ytSearch+fName+"+"+lName+"+highlights"
-                    response = requests.get(url)
-                    yhtml=response.text
-                except requests.exceptions.RequestException:
-                    yhtml=""
-                if yhtml!="":
-                    yhtml=yhtml[yhtml.find('href="/watch?v=')+15:]
-                    vLink=yhtml[:yhtml.find('"')]
-                    if chromeCast:
-                        ytc.play_video(vLink)
-                    else:
-                        youTubeDriver.get(yt+vLink)
+                vLink=findVLink(fName,lName)
+                if vLink!="":
+                    playVid(vLink)
         pTable.append(thisPlayer)
     return pTable
 
+def skipAds():
+    if chromeCast == False:
+        try:
+            skipE=youTubeDriver.find_element_by_class_name("ytp-ad-skip-button-container")
+            skipE.click()
+            time.sleep(1)
+        except:
+            nada=0
+    return
 
 #create player table
 pTable=[]
@@ -214,6 +250,7 @@ pTable=[]
 #                                       videos for the players already entered.
 choiceActive=False
 while (True):
+    skipAds()
     if site=="clicky":
         html=draftDriver.page_source
         html=html[html.find("<tbody>"):html.find("</tbody>")]
