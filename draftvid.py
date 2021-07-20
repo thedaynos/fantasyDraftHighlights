@@ -6,14 +6,14 @@ if chromeCast:
     import pychromecast
     from pychromecast.controllers.youtube import YouTubeController
     chromecasts=pychromecast.get_chromecasts()
+    chromecasts,browser=pychromecast.get_listed_chromecasts(friendly_names=[chromeCastName])
     try:
-        chromecasts,browser=pychromecast.get_listed_chromecasts(friendly_names=[chromeCastName])
         cast=chromecasts[0]
         cast.wait()
         ytc=YouTubeController()
         cast.register_handler(ytc)
         print ("\n\nConnected to: "+chromeCastName+"!")
-    except StopIteration:
+    except:
         print ("\n\n"+chromeCastName+" not found, vids will be displayed on this screen")
         chromeCast=False
 
