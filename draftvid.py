@@ -7,7 +7,8 @@ if chromeCast:
     from pychromecast.controllers.youtube import YouTubeController
     chromecasts=pychromecast.get_chromecasts()
     try:
-        cast = next(cc for cc in chromecasts if cc.device.friendly_name==chromeCastName)
+        chromecasts,browser=pychromecast.get_listed_chromecasts(friendly_names=[chromeCastName])
+        cast=chromecasts[0]
         cast.wait()
         ytc=YouTubeController()
         cast.register_handler(ytc)
