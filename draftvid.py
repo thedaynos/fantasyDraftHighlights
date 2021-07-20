@@ -99,7 +99,7 @@ if chromeCast==False or site=="clicky" or site=="espn" or site=="yahoo":
 #setting up youtube display for selenium
 if chromeCast==False:
     youTubeOptions=webdriver.ChromeOptions()
-    youTubeOptions.add_argument("user-data-dir=youTube")
+    #youTubeOptions.add_argument("user-data-dir=youTube")
     youTubeOptions.add_argument("--start-maximized")
     youTubeOptions.add_argument("--kiosk")
     youTubeOptions.add_argument('disable-infobars')
