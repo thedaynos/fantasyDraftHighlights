@@ -121,8 +121,6 @@ ytSearch = "https://www.youtube.com/results?search_query="
 # videoEmbeddable:"true"
 
 # Functions to find tags if screen scraping is needed
-import re
-
 def findClickyTag(html, x):
     if html.find(x) != -1:
         xhtml = html[html.find(x) + len(x):]
