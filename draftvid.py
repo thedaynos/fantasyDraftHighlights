@@ -1,235 +1,260 @@
-import re, requests,json
+import re
+import requests
+import json
 from config import *
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from pychromecast.controllers.youtube import YouTubeController
+import time
 
-#initialize chromecast
+# Set up chromecast
 if chromeCast:
     import pychromecast
-    from pychromecast.controllers.youtube import YouTubeController
-    chromecasts=pychromecast.get_chromecasts()
-    chromecasts,browser=pychromecast.get_listed_chromecasts(friendly_names=[chromeCastName])
+    chromecasts = pychromecast.get_chromecasts()
+    chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[chromeCastName])
     try:
-        cast=chromecasts[0]
+        cast = chromecasts[0]
         cast.wait()
-        ytc=YouTubeController()
+        ytc = YouTubeController()
         cast.register_handler(ytc)
-        print ("\n\nConnected to: "+chromeCastName+"!")
+        print("\n\nConnected to: " + chromeCastName + "!")
     except:
-        print ("\n\n"+chromeCastName+" not found, vids will be displayed on this screen")
-        chromeCast=False
+        print("\n\n" + chromeCastName + " not found, videos will be displayed on this screen")
+        chromeCast = False
 
-#set up system variables for specific drafting sites
+# Set up system variables for specific drafting sites
 if "sleeper" in site.lower():
-    import time
-    site="sleeper"
-    sApi="https://api.sleeper.app/v1/draft/"+str(boardNum)+"/picks"
+    site = "sleeper"
+    sApi = "https://api.sleeper.app/v1/draft/" + str(boardNum) + "/picks"
     from vDictSleeper import vDictSleeper as vDict
 elif "clicky" in site.lower():
-    site="clicky"
+    site = "clicky"
     from vDictClicky import vDictClicky as vDict
 elif "basmith7" in site.lower():
-    import time
-    site="basmith7"
+    site = "basmith7"
     from vDictbasmith7 import vDictbasmith7 as vDict
 elif "espn" in site.lower():
-    site="espn"
-    import time
+    site = "espn"
     from vDictEspn import vDictEspn as vDict
-    mainUrl="https://www.espn.com/fantasy/football/"
-    boardUrl="fantasy.espn.com/football/draft?leagueId="
+    mainUrl = "https://www.espn.com/fantasy/football/"
+    boardUrl = "fantasy.espn.com/football/draft?leagueId="
 elif "yahoo" in site.lower():
-    site="yahoo"
-    import time
+    site = "yahoo"
     from vDictYahoo import vDictYahoo as vDict
-    mainUrl="https://sports.yahoo.com/fantasy/"
-    boardUrl="football.fantasysports.yahoo.com/draftclient"
+    mainUrl = "https://sports.yahoo.com/fantasy/"
+    boardUrl = "football.fantasysports.yahoo.com/draftclient"
 else:
-    print ("\n\n\nConfig Error\n\n")
-    print ('In the config file, the line site= must have a choice of: "espn", "yahoo", "sleeper", "clicky", or "basmith7".')
+    print("\n\n\nConfig Error\n\n")
+    print('In the config file, the line site= must have a choice of: "espn", "yahoo", "sleeper", "clicky", or "basmith7".')
     import sys
     exit()
 
-#initialize selenium drivers and open draft boards
-if chromeCast==False or site=="clicky" or site=="espn" or site=="yahoo":
-    # these lines are needed for all cases that use selenium
+    # Initialize selenium drivers and open draft boards
+if not chromeCast or site == "clicky" or site == "espn" or site == "yahoo":
+    # These lines are needed for all cases that use selenium
     from selenium import webdriver
-    prefs={"profile.default_content_setting_values.notifications":2}
-    # this section is for draftboard selenium use cases (non youtube)
-    if site=="clicky" or site=="espn" or site=="yahoo":
-        draftOptions=webdriver.ChromeOptions()
-        draftOptions.add_experimental_option("prefs",prefs)
+    prefs = {"profile.default_content_setting_values.notifications": 2}
+    # This section is for draftboard selenium use cases (non-youtube)
+    if site == "clicky" or site == "espn" or site == "yahoo":
+        draftOptions = webdriver.ChromeOptions()
+        draftOptions.add_experimental_option("prefs", prefs)
         draftOptions.add_experimental_option('excludeSwitches', ['enable-logging'])
         draftOptions.add_argument('disable-infobars')
-        #cannot be headless for espn or yahoo because you need to log in.
-        if draftBoardVisible==False and site!="espn" and site!="yahoo":
+        draftOptions.add_extension('C:/extension_5_6_0_0.crx')
+        # Cannot be headless for ESPN or Yahoo because you need to log in.
+        if not draftBoardVisible and site != "espn" and site != "yahoo":
             draftOptions.add_argument("--headless")
-        draftDriver=webdriver.Chrome(chrome_options=draftOptions)
-        if site=="clicky":
-            draftDriver.get('https://clickydraft.com/draftapp/board/'+str(boardNum))
-        elif site=="espn" or site=="yahoo":
+        draftDriver = webdriver.Chrome(options=draftOptions)
+        if site == "clicky":
+            draftDriver.get('https://clickydraft.com/draftapp/board/' + str(boardNum))
+        elif site == "espn" or site == "yahoo":
             draftDriver.get(mainUrl)
-            url=""
-            print ("waiting for user to open the "+site+" draft board")
-            # toggles through open tabs every 5 seconds to find your draft board.
+            url = ""
+            print("Waiting for the user to open the " + site + " draft board")
+            # Toggles through open tabs every 5 seconds to find your draft board.
             while True:
                 for handle in draftDriver.window_handles:
                     draftDriver.switch_to.window(handle)
                     if boardUrl in draftDriver.current_url:
-                        url=draftDriver.current_url
-                        print ("We found your board!  Ready to Draft!!!")
+                        url = draftDriver.current_url
+                        print("We found your board! Ready to Draft!!!")
                     elif site not in draftDriver.current_url:
                         draftDriver.close()
-                if url!="":
+                if url != "":
                     break
                 else:
                     time.sleep(5)
-            # after the board is found, selenium loads it to give it focus
+            # After the board is found, selenium loads it to give it focus
             draftDriver.get(url)
-            # for yahoo, it will click on "draft results" or else selenium can't see the picks
-            if site=="yahoo":
+            # For Yahoo, it will click on "draft results" or else selenium can't see the picks
+            if site == "yahoo":
                 from selenium.common.exceptions import NoSuchElementException as NSE
                 while True:
                     try:
-                        resultsElement=draftDriver.find_element_by_xpath("//*[contains(text(), 'Draft Results')]")
+                        resultsElement = draftDriver.find_element(By.XPATH, "//*[contains(text(), 'Draft Results')]")
                         resultsElement.click()
                         break
                     except NSE:
                         time.sleep(1)
             draftDriver.minimize_window()
 
-#setting up youtube display for selenium
-if chromeCast==False:
-    youTubeOptions=webdriver.ChromeOptions()
+# Setting up YouTube display for Selenium
+if not chromeCast:
+    options = {}
+    youTubeOptions = webdriver.ChromeOptions()
     #youTubeOptions.add_argument("user-data-dir=youTube")
     youTubeOptions.add_argument("--start-maximized")
     youTubeOptions.add_argument("--kiosk")
+    youTubeOptions.add_argument("--incognito")
     youTubeOptions.add_argument('disable-infobars')
+    youTubeOptions.add_extension('C:/extension_5_6_0_0.crx')
     youTubeOptions.add_experimental_option('excludeSwitches', ['enable-logging'])
-    youTubeOptions.add_experimental_option("prefs",prefs)
-    youTubeDriver=webdriver.Chrome(chrome_options=youTubeOptions)
+    youTubeOptions.add_experimental_option("prefs", prefs)
+    youTubeDriver = webdriver.Chrome(options=youTubeOptions)
     youTubeDriver.get("https://www.youtube.com")
 
-
 #setting up youtube links
-yt="https://www.youtube.com/watch?v="
-yt2="&feature=emb_rel_err"
-ytSearch="https://www.youtube.com/results?search_query="
-#videoEmbeddable:"true"
+yt = "https://www.youtube.com/watch?v="
+yt2 = "&feature=emb_rel_err"
+ytSearch = "https://www.youtube.com/results?search_query="
+# videoEmbeddable:"true"
 
-#functions to find tags if screen scraping is needed
-s=re.compile('[^a-zA-Z]')
-def findClickyTag(html,x):
-    if html.find(x)!=-1:
-        xhtml=html[html.find(x)+len(x):]
-        end=xhtml.find('<')
+# Functions to find tags if screen scraping is needed
+import re
+
+def findClickyTag(html, x):
+    if html.find(x) != -1:
+        xhtml = html[html.find(x) + len(x):]
+        end = xhtml.find('<')
     else:
-        return -1,html
-    return s.sub('',xhtml[:end]),xhtml
+        return -1, html
+    return re.sub('[^a-zA-Z]', '', xhtml[:end]), xhtml
+
 def findbasmith7Tag(html):
     if html.find('1050371') < 0:
-        return False,"","","",""
+        return False, "", "", "", ""
     else:
-        html=html[html.find('1050371')+21:]
-        fullName=html[:html.find('\\n')]
-        posString=html[html.find('\\n')+2:]
-        dashLoc=posString.find(' - ')
-        pos=posString[:dashLoc]
-        team=posString[dashLoc+3:dashLoc+6]
-        return True,s.sub('',fullName),pos,team,html
+        html = html[html.find('1050371') + 21:]
+        fullName = html[:html.find('\\n')]
+        posString = html[html.find('\\n') + 2:]
+        dashLoc = posString.find(' - ')
+        pos = posString[:dashLoc]
+        team = posString[dashLoc + 3:dashLoc + 6]
+        return True, re.sub('[^a-zA-Z]', '', fullName), pos, team, html
+
 def findEspnTag(html):
-    nText='<span class="playerinfo__playername">'
-    tText='<span class="playerinfo__playerteam">'
-    pText='<span class="playerinfo__playerpos ttu">'
-    aPos=html.find(nText)
-    if aPos <0:
-        return html,"","",""
-    html=html[html.find(nText)+len(nText):]
-    fullName=html[:html.find('<')]
-    html=html[html.find(tText)+len(tText):]
-    team=html[:html.find('<')]
-    html=html[html.find(pText)+len(pText):]
-    pos=html[:html.find('<')]
-    return html,fullName,team,pos
+    nText = '<span class="playerinfo__playername">'
+    tText = '<span class="playerinfo__playerteam">'
+    pText = '<span class="playerinfo__playerpos ttu">'
+    aPos = html.find(nText)
+    if aPos < 0:
+        return html, "", "", ""
+    html = html[html.find(nText) + len(nText):]
+    fullName = html[:html.find('<')]
+    html = html[html.find(tText) + len(tText):]
+    team = html[:html.find('<')]
+    html = html[html.find(pText) + len(pText):]
+    pos = html[:html.find('<')]
+    return html, fullName, team, pos
+
 def findYahooTag(html):
-    idText='<td class="Ta-c">'
-    fnText=' class="ys-player">'
-    teamText='<abbr title="'
-    posText='<abbr class="Mstart-4" title="'
-    aPos=html.find(idText)
-    if aPos <0:
-        return html,"","",""
-    html=html[html.find(fnText)+len(fnText):]
-    thisPlayer=html[:html.find('</tr>')]
-    fullName=thisPlayer[:thisPlayer.find('<')]
-    if thisPlayer.find(teamText)==-1:
-        pos="DEF"
-        return html,fullName,"",pos
-    thisPlayer=thisPlayer[thisPlayer.find(teamText)+1:]
-    team=thisPlayer[thisPlayer.find('>')+1:thisPlayer.find('<')]
-    thisPlayer=thisPlayer[thisPlayer.find(posText)+1:]
-    pos=thisPlayer[thisPlayer.find('>')+1:thisPlayer.find('<')]
-    return html,fullName,team,pos
+    idText = '<td class="Ta-c">'
+    fnText = ' class="ys-player">'
+    teamText = '<abbr title="'
+    posText = '<abbr class="Mstart-4" title="'
+    aPos = html.find(idText)
+    if aPos < 0:
+        return html, "", "", ""
+    html = html[html.find(fnText) + len(fnText):]
+    thisPlayer = html[:html.find('</tr>')]
+    fullName = thisPlayer[:thisPlayer.find('<')]
+    if thisPlayer.find(teamText) == -1:
+        pos = "DEF"
+        return html, fullName, "", pos
+    thisPlayer = thisPlayer[thisPlayer.find(teamText) + 1:]
+    team = thisPlayer[thisPlayer.find('>') + 1:thisPlayer.find('<')]
+    thisPlayer = thisPlayer[thisPlayer.find(posText) + 1:]
+    pos = thisPlayer[thisPlayer.find('>') + 1:thisPlayer.find('<')]
+    return html, fullName, team, pos
 
-def findYahooD(html):  #need a separate function for defenses on yahoo
-    idText='Fw-b ys-player Mstart-4'
-    teamText='<span class="Mstart-4"><abbr title="'
-    posText='<abbr title="">'
-    if html.find(idText)==-1:
-        return "","","",""
-    html=html[html.find(idText):]
-    html=html[html.find('>')+1:]
-    fullName=html[:html.find('<')]
-    html=html[html.find(teamText)+len(teamText):]
-    html=html[html.find('>')+1:]
-    team=html[:html.find('<')]
-    html=html[html.find(posText)+len(posText):]
-    pos=html[:html.find('<')]
-    return html,fullName,team,pos
+def findYahooD(html):  # need a separate function for defenses on yahoo
+    idText = 'Fw-b ys-player Mstart-4'
+    teamText = '<span class="Mstart-4"><abbr title="'
+    posText = '<abbr title="">'
+    if html.find(idText) == -1:
+        return "", "", "", ""
+    html = html[html.find(idText):]
+    html = html[html.find('>') + 1:]
+    fullName = html[:html.find('<')]
+    html = html[html.find(teamText) + len(teamText):]
+    html = html[html.find('>') + 1:]
+    team = html[:html.find('<')]
+    html = html[html.find(posText) + len(posText):]
+    pos = html[:html.find('<')]
+    return html, fullName, team, pos
 
-#this function plays the video found from youtube
+    # This function plays the video found from YouTube
 def playVid(vLink):
     if chromeCast:
         ytc.play_video(vLink)
     else:
         youTubeDriver.get(yt+vLink+yt2)
         try:
-            playaE=youTubeDriver.find_element_by_id('movie_player')
+            playaE = youTubeDriver.find_element(By.ID, 'movie_player')
         except:
-            nada=0
+            nada = 0
         try:
             playaE.send_keys('f')
         except:
-            nada=0
-    return 
+            nada = 0
+    return
 
-#searches Youtube for link
-def findVLink(fName,lName):
+# Searches YouTube for link
+def findVLink(fName, lName):
     try:
-        url=ytSearch+fName+"+"+lName+"+highlights"
+        url = ytSearch + fName + "+" + lName + "+highlights"
         response = requests.get(url)
-        yhtml=response.text
-        yhtml=yhtml[yhtml.find('href="/watch?v=')+15:]
-        vLink=yhtml[:yhtml.find('"')]
+        yhtml = response.text
+        yhtml = yhtml[yhtml.find('href="/watch?v=')+15:]
+        vLink = yhtml[:yhtml.find('"')]
         if "><" in vLink:
-            yhtml=response.text
-            yhtml=yhtml[yhtml.find('"videoId":"')+11:]
-            vLink=yhtml[:yhtml.find('"')]
+            yhtml = response.text
+            yhtml = yhtml[yhtml.find('"videoId":"')+11:]
+            vLink = yhtml[:yhtml.find('"')]
     except requests.exceptions.RequestException:
-        vLink=""
+        vLink = ""
     return vLink
 
-#function runs when player is found on the draft board
-def addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName):
+    # This function plays the video found from YouTube
+def playVid(vLink):
+    if chromeCast:
+        ytc.play_video(vLink)
+    else:
+        youTubeDriver.get(yt + vLink + yt2)
+        try:
+            playaE = youTubeDriver.find_element(By.ID, 'movie_player')
+        except:
+            nada = 0
+        try:
+            playaE.send_keys('f')
+        except:
+            nada = 0
+    return
+
+# This function runs when a player is found on the draft board
+def addPlayer(thisPlayer, pTable, choiceActive, vDict, vStr, fName, lName):
     if thisPlayer not in pTable:
         try:
-            vLink=vDict[vStr]
+            vLink = vDict[vStr]
         except KeyError:
-            vLink=""
+            vLink = ""
         if choiceActive:
-            if vLink!="":
+            if vLink != "":
                 playVid(vLink)
             elif autoSearch:
-                vLink=findVLink(fName,lName)
-                if vLink!="":
+                vLink = findVLink(fName, lName)
+                if vLink != "":
                     playVid(vLink)
         pTable.append(thisPlayer)
     return pTable
@@ -237,107 +262,109 @@ def addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName):
 def skipAds():
     if chromeCast == False:
         try:
-            skipE=youTubeDriver.find_element_by_class_name("ytp-ad-skip-button-container")
+            time.sleep(6)
+            skipE = youTubeDriver.find_element(By.CLASS_NAME, "ytp-ad-skip-button-container")
             skipE.click()
             time.sleep(1)
         except:
-            nada=0
+            nada = 0
     return
 
 #create player table
-pTable=[]
+pTable = []
 
-#choiceActive set to false at the beginning so the first player loop doesn't play
-#                                       videos for the players already entered.
-choiceActive=False
-while (True):
+# choiceActive set to false at the beginning so the first player loop doesn't play
+# videos for the players already entered.
+choiceActive = False
+
+while True:
     skipAds()
-    if site=="clicky":
-        html=draftDriver.page_source
-        html=html[html.find("<tbody>"):html.find("</tbody>")]
-        for x in range (0,teams*rounds):
-            html=html[html.find('class="pickContents"'):]
-            pos,html=findClickyTag(html,'class="playerPos">')
-            team,html=findClickyTag(html,'class="playerTeam">')
-            fName,html=findClickyTag(html,'class="playerFName">')
-            lName,html=findClickyTag(html,'class="playerLName">')
-            thisPlayer=[pos,team,fName,lName]
-            vStr=pos+team+fName+lName
-            pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName)
-    elif site=="sleeper":
-        time.sleep(1) # 1 second wait in between api calls
+    if site == "clicky":
+        html = draftDriver.page_source
+        html = html[html.find("<tbody>"):html.find("</tbody>")]
+        for x in range(0, teams * rounds):
+            html = html[html.find('class="pickContents"'):]
+            pos, html = findClickyTag(html, 'class="playerPos">')
+            team, html = findClickyTag(html, 'class="playerTeam">')
+            fName, html = findClickyTag(html, 'class="playerFName">')
+            lName, html = findClickyTag(html, 'class="playerLName">')
+            thisPlayer = [pos, team, fName, lName]
+            vStr = pos + team + fName + lName
+            pTable = addPlayer(thisPlayer, pTable, choiceActive, vDict, vStr, fName, lName)
+    elif site == "sleeper":
+        time.sleep(1)  # 1 second wait in between API calls
         while True:
             try:
                 response = requests.get(sApi)
-                yJson=json.loads(response.text)
+                yJson = json.loads(response.text)
                 break
             except requests.exceptions.RequestException:
-                yJson=""
-                print ("call to: "+sApi+" failed, trying again in 5 seconds")
+                yJson = ""
+                print("Call to: " + sApi + " failed, trying again in 5 seconds")
                 time.sleep(5)
-        for x in range(0,len(yJson)):
-            pos=yJson[x]["metadata"]["position"]+yJson[x]["metadata"]["team"]
-            fName=yJson[x]["metadata"]["first_name"]
-            lName=yJson[x]["metadata"]["last_name"]
-            thisPlayer=[pos,fName,lName]
-            vStr=pos+fName+lName
-            pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,fName,lName)
-    elif site=="basmith7":
+        for x in range(0, len(yJson)):
+            pos = yJson[x]["metadata"]["position"] + yJson[x]["metadata"]["team"]
+            fName = yJson[x]["metadata"]["first_name"]
+            lName = yJson[x]["metadata"]["last_name"]
+            thisPlayer = [pos, fName, lName]
+            vStr = pos + fName + lName
+            pTable = addPlayer(thisPlayer, pTable, choiceActive, vDict, vStr, fName, lName)
+    elif site == "basmith7":
         time.sleep(5)  # 5 second wait in between page requests
         while True:
             try:
                 response = requests.get(basmith7URL)
-                html=response.text
+                html = response.text
                 break
             except requests.exceptions.RequestException:
-                html=""
-                print ("call to: "+basmith7URL+" failed, trying again in 5 seconds")
+                html = ""
+                print("Call to: " + basmith7URL + " failed, trying again in 5 seconds")
                 time.sleep(5)
-        html=html[html.find("var bootstrapData = ")+20:]
-        html=html[:html.find(";")]
+        html = html[html.find("var bootstrapData = ") + 20:]
+        html = html[:html.find(";")]
         while True:
-            foundName,fullName,pos,team,html=findbasmith7Tag(html)
+            foundName, fullName, pos, team, html = findbasmith7Tag(html)
             if foundName:
-                vStr=s.sub('',str(pos)+str(team)+str(fullName))
-                thisPlayer=[pos,team,fullName]
-                pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,"",fullName)
+                vStr = s.sub('', str(pos) + str(team) + str(fullName))
+                thisPlayer = [pos, team, fullName]
+                pTable = addPlayer(thisPlayer, pTable, choiceActive, vDict, vStr, "", fullName)
             else:
                 break
-    elif site=="espn":
-        html=draftDriver.page_source   
+    elif site == "espn":
+        html = draftDriver.page_source
         while True:
-            html,fullName,team,pos=findEspnTag(html)
-            if fullName=="":
+            html, fullName, team, pos = findEspnTag(html)
+            if fullName == "":
                 break
-            vStr=s.sub('',str(pos)+str(team)+str(fullName))
-            thisPlayer=[pos,team,fullName]
-            pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,"",fullName)
-    elif site=="yahoo":
-        html=draftDriver.page_source
-        dhtml=html
+            vStr = s.sub('', str(pos) + str(team) + str(fullName))
+            thisPlayer = [pos, team, fullName]
+            pTable = addPlayer(thisPlayer, pTable, choiceActive, vDict, vStr, "", fullName)
+    elif site == "yahoo":
+        html = draftDriver.page_source
+        dhtml = html
         while True:
-            html,fullName,team,pos=findYahooTag(html)
-            if fullName=="":
+            html, fullName, team, pos = findYahooTag(html)
+            if fullName == "":
                 break
-            if pos!="DEF":
-                vStr=s.sub('',str(pos)+str(team)+str(fullName))
-                thisPlayer=[pos,team,fullName]
-                pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,"",fullName)
+            if pos != "DEF":
+                vStr = s.sub('', str(pos) + str(team) + str(fullName))
+                thisPlayer = [pos, team, fullName]
+                pTable = addPlayer(thisPlayer, pTable, choiceActive, vDict, vStr, "", fullName)
         while True:
-            dhtml,fullName,team,pos=findYahooD(dhtml)
-            if fullName=="":
+            dhtml, fullName, team, pos = findYahooD(dhtml)
+            if fullName == "":
                 break
-            if pos=="DEF":
-                vStr=s.sub('',str(pos)+str(team)+str(fullName))
-                thisPlayer=[pos,team,fullName]
-                pTable=addPlayer(thisPlayer,pTable,choiceActive,vDict,vStr,"",fullName)            
-    choiceActive=True
-    if len(pTable)>=(teams*rounds):
+            if pos == "DEF":
+                vStr = s.sub('', str(pos) + str(team) + str(fullName))
+                thisPlayer = [pos, team, fullName]
+                pTable = addPlayer(thisPlayer, pTable, choiceActive, vDict, vStr, "", fullName)
+    choiceActive = True
+    if len(pTable) >= (teams * rounds):
         break
 
-if site=="clicky" or site=="espn" or site=="yahoo":
+if site == "clicky" or site == "espn" or site == "yahoo":
     draftDriver.quit()
-if chromeCast==False:
+if chromeCast == False:
     print("\n\nDraft completed! YouTube window will close in 5 minutes.\n\n")
     time.sleep(300)
     youTubeDriver.quit()
